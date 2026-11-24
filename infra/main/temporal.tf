@@ -96,3 +96,9 @@ resource "terraform_data" "ha_settings" {
     command = "${path.module}/../../scripts/ha-settings.sh ${local.namespace_id}"
   }
 }
+
+resource "temporalcloud_namespace_tags" "ns" {
+  count        = length(var.namespace_tags) > 0 ? 1 : 0
+  namespace_id = local.namespace_id
+  tags         = var.namespace_tags
+}

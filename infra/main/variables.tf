@@ -41,3 +41,9 @@ variable "failover_custom_role" {
     and may need to be enabled on the account). false: the failover key gets Namespace Admin.
   EOT
 }
+
+variable "namespace_tags" {
+  type        = map(string)
+  default     = {}
+  description = "Tags to put on the namespace, e.g. { owner = \"jane.doe\" }. Set in terraform.tfvars."
+}
