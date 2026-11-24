@@ -11,7 +11,8 @@ RUN dotnet publish src/MoneyTransfer.Worker/MoneyTransfer.Worker.csproj -c Relea
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app .
-ENV HTTP_PORT=8080 METRICS_PORT=9464
+# The worker binds HTTP_PORT itself; clear the base image default to avoid an override warning.
+ENV HTTP_PORT=8080 METRICS_PORT=9464 ASPNETCORE_HTTP_PORTS=
 EXPOSE 8080 9464
 USER $APP_UID
 ENTRYPOINT ["dotnet", "MoneyTransfer.Worker.dll"]
