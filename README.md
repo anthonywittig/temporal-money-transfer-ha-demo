@@ -102,6 +102,7 @@ Replication for a new namespace can take a few minutes. The dashboard disables t
 NS=$(terraform -chdir=infra/main output -raw namespace_id)
 temporal cloud namespace ha get --api-key "$TEMPORAL_CLOUD_API_KEY" --namespace "$NS"
 temporal cloud namespace ha failover --api-key "$TEMPORAL_CLOUD_API_KEY" --namespace "$NS" --region gcp-us-central1
+# It prompts for confirmation. In scripts, add --auto-confirm or the command waits forever.
 ```
 
 ## Teardown

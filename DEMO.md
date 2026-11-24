@@ -62,6 +62,6 @@ Start another batch and click **Fail over to gcp-us-east4**. It's the same butto
 | Symptom | Do |
 |---|---|
 | Failover button disabled ("replica not ready") | The replica is still syncing. Talk through slides and check again in a minute. |
-| Button errors out | Fail over from the terminal: `temporal cloud namespace ha failover --namespace $NS --region <target>` |
+| Button errors out | Fail over from the terminal: `temporal cloud namespace ha failover --namespace $NS --region <target>`. It asks you to confirm; add `--auto-confirm` to skip the prompt in scripts. |
 | Charts empty or lagging | GMP lags 15–30s. Narrate from the badge and the in-flight count. |
-| A pod is crash-looping | `kubectl -n ha-demo logs deploy/money-transfer-worker`. Standby pods should log `NamespaceNotActive` polls and nothing worse. |
+| A pod is crash-looping | `kubectl -n ha-demo logs deploy/money-transfer-worker`. Standby pods log nothing after startup. Their polls are refused quietly. |
