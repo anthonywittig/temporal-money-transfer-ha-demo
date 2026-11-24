@@ -62,7 +62,7 @@ This repo is public. Terraform state contains API key tokens, so it lives in a G
 
 ## Setup
 
-> Status: the worker and dashboard have been verified locally. The cloud steps below haven't yet been run end to end. See the OpenSpec tasks for what's left.
+> Verified end to end on GCP (us-east4 ⇄ us-central1): 50 in-flight transfers fail over and complete in the other region, in both directions.
 
 ```bash
 export PROJECT_ID=my-gcp-project
@@ -73,8 +73,11 @@ terraform -chdir=infra/bootstrap init
 terraform -chdir=infra/bootstrap apply -var project_id=$PROJECT_ID
 export STATE_BUCKET=$(terraform -chdir=infra/bootstrap output -raw state_bucket)
 
-# 2. Temporal Cloud namespace, service accounts and keys, Artifact Registry, GKE clusters
-#    (also runs scripts/ha-settings.sh to disable passive poller forwarding)
+# 2. Temporal Cloud namespace, service accounts and keys, VPC + Cloud NAT, Artifact Registry,
+#    GKE clusters (also runs scripts/ha-settings.sh to disable passive poller forwarding).
+#    Optional: copy infra/main/terraform.example.tfvars to terraform.tfvars (git-ignored) to set
+#    namespace_name (pick a unique one in a shared account), namespace_tags, or regions.
+#    Regions can't be changed after the namespace exists.
 terraform -chdir=infra/main init -backend-config="bucket=$STATE_BUCKET"
 terraform -chdir=infra/main apply -var project_id=$PROJECT_ID
 temporal cloud namespace ha get --api-key "$TEMPORAL_CLOUD_API_KEY" \
