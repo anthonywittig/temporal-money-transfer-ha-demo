@@ -12,7 +12,7 @@
 
 ## 1. Set the scene (2 min)
 
-> "Here's a money transfer workflow: withdraw, a 20-second hold, then deposit. It runs on Temporal Cloud in **two GCP regions**, us-east4 and us-central1. The namespace is replicated asynchronously from the active region to the replica."
+> "Here's a money transfer workflow: withdraw, a 60-second hold, then deposit. It runs on Temporal Cloud in **two GCP regions**, us-east4 and us-central1. The namespace is replicated asynchronously from the active region to the replica."
 
 Point at the region cards:
 
@@ -28,9 +28,11 @@ Point at the region cards:
 
 Click **Start transfers** with 50.
 
-> "Fifty transfers in flight. They all do their withdraw in us-east4 and then sit in their 20-second hold."
+> "Fifty transfers in flight. They all do their withdraw in us-east4 and then sit in their 60-second hold."
 
 Point at the east line on the chart, and at the in-flight count of about 50.
+
+**Timing:** the region actually switches about 20–25s after you click Fail over, even though the badge keeps showing "in progress" for about 80s. Click within about 30s of starting the batch so the switch lands while transfers are still on hold.
 
 ## 4. Fail over (2 min)
 

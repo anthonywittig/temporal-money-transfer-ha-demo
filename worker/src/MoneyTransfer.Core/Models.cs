@@ -33,5 +33,5 @@ public static class Names
     public const string Withdraw = "Withdraw";
     public const string Deposit = "Deposit";
     public const string DefaultTaskQueue = "money-transfer";
-    public const int DefaultPauseSeconds = 20;
+    public const int DefaultPauseSeconds = 60;
 }

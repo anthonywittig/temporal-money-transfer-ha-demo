@@ -43,7 +43,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     insecure,
     gcpProjectId,
     taskQueue: env.TASK_QUEUE?.trim() || 'money-transfer',
-    pauseSeconds: intOr(env, 'TRANSFER_PAUSE_SECONDS', 20),
+    pauseSeconds: intOr(env, 'TRANSFER_PAUSE_SECONDS', 60),
     port: intOr(env, 'PORT', 3000),
     cloudOpsUrl: (env.CLOUD_OPS_URL?.trim() || 'https://saas-api.tmprl.cloud').replace(/\/$/, ''),
     cloudOpsApiVersion: env.CLOUD_OPS_API_VERSION?.trim() || undefined,
