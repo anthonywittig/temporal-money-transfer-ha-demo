@@ -32,7 +32,7 @@ Click **Start transfers** with 50.
 
 Point at the east line on the chart, and at the in-flight count of about 50.
 
-**Timing:** the region actually switches about 20–25s after you click Fail over, even though the badge keeps showing "in progress" for about 80s. Click within about 30s of starting the batch so the switch lands while transfers are still on hold.
+**Timing (measured):** after you click Fail over, the badge flips to the new region in about 45s, the 50 transfers finish about 55–60s after the click, and the failover operation itself reports done at about 95s (the badge's amber "in progress" text clears then). Click within about 10–15s of starting the batch so the region switch lands while the transfers are still on their 60s hold.
 
 ## 4. Fail over (2 min)
 
