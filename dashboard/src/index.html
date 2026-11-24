@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HA Failover Demo</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Money Transfer: HA Failover</h1>
+        <p class="sub" id="ns-info">Loading...</p>
+      </div>
+      <div class="badge-wrap">
+        <span class="label">Active region</span>
+        <span id="active-badge" class="badge">-</span>
+        <span id="op-status" class="op-status"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel controls">
+        <div class="control">
+          <label for="count">Transfers</label>
+          <input id="count" type="number" min="1" max="500" value="50" />
+          <button id="start-btn">Start transfers</button>
+          <span id="start-status" class="status"></span>
+        </div>
+        <div class="control">
+          <button id="failover-btn" class="danger" disabled>Fail over</button>
+          <span id="failover-status" class="status"></span>
+        </div>
+      </section>
+
+      <section class="panel stats">
+        <div class="stat">
+          <span class="label">In flight</span>
+          <span id="inflight" class="value">-</span>
+          <span id="inflight-error" class="error"></span>
+        </div>
+        <div id="regions" class="regions"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Transfer steps per second, by region</h2>
+        <div class="chart-wrap"><canvas id="steps-chart"></canvas></div>
+        <p id="metrics-error" class="error"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Transfers completed per second, by region</h2>
+        <div class="chart-wrap"><canvas id="completed-chart"></canvas></div>
+      </section>
+    </main>
+
+    <dialog id="confirm">
+      <form method="dialog">
+        <p id="confirm-text"></p>
+        <div class="dialog-actions">
+          <button value="cancel">Cancel</button>
+          <button value="ok" class="danger">Fail over</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

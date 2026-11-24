@@ -1,0 +1,128 @@
+:root {
+  --bg: #0f1218;
+  --panel: #171b23;
+  --border: #262c38;
+  --text: #e6e9ef;
+  --muted: #8a93a6;
+  --accent: #7c8cff;
+  --ok: #3ecf8e;
+  --warn: #f5b942;
+  --danger: #f2555a;
+  --east: #7c8cff;
+  --central: #3ecf8e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+h1 { margin: 0; font-size: 22px; }
+h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: var(--muted); }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+.badge-wrap { display: flex; align-items: center; gap: 10px; }
+.label { color: var(--muted); font-size: 13px; }
+.badge {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0b0d12;
+  font-weight: 700;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+.badge.switching { background: var(--warn); animation: pulse 1s infinite; }
+.op-status { color: var(--warn); font-size: 13px; }
+
+@keyframes pulse { 50% { opacity: 0.6; } }
+
+main {
+  display: grid;
+  gap: 16px;
+  padding: 16px 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.controls { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-between; }
+.control { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+input[type='number'] {
+  width: 90px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  padding: 9px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: #0b0d12;
+  font-weight: 600;
+  cursor: pointer;
+}
+button.danger { background: var(--danger); color: #fff; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.status { color: var(--muted); font-size: 13px; }
+.error { color: var(--danger); font-size: 13px; margin: 6px 0 0; }
+.error:empty { display: none; }
+
+.stats { display: flex; gap: 32px; flex-wrap: wrap; align-items: center; }
+.stat { display: flex; flex-direction: column; }
+.stat .value { font-size: 36px; font-weight: 700; }
+
+.regions { display: flex; gap: 12px; flex-wrap: wrap; }
+.region {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 180px;
+}
+.region.active { border-color: var(--ok); }
+.region .name { font-weight: 600; }
+.region .role { font-size: 12px; color: var(--muted); }
+.region.active .role { color: var(--ok); }
+
+.chart-wrap { position: relative; height: 260px; }
+
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-width: 420px;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dialog-actions button[value='cancel'] { background: transparent; color: var(--text); }
+
+@media (max-width: 600px) {
+  header, main { padding-left: 16px; padding-right: 16px; }
+}

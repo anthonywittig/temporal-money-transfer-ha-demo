@@ -39,7 +39,8 @@ After a failover, the roles swap: central becomes busy, east goes on standby, an
 | Path | What |
 |---|---|
 | `infra/bootstrap/` | Terraform: GCS bucket for remote state |
-| `infra/main/` | Terraform: Temporal Cloud namespace, service accounts and keys, Artifact Registry, per-region GKE and workers |
+| `infra/main/` | Terraform: Temporal Cloud HA namespace, service accounts and API keys, Artifact Registry, one GKE Autopilot cluster per region |
+| `infra/workloads/` | Terraform: worker Deployment, API key Secret and GMP PodMonitoring in each cluster |
 | `worker/` | .NET solution: workflow, activities, worker host, tests |
 | `dashboard/` | TypeScript: local API server and web UI |
 | `scripts/` | Helper scripts (HA settings, image build/push, dashboard env) |
@@ -61,4 +62,54 @@ This repo is public. Terraform state contains API key tokens, so it lives in a G
 
 ## Setup
 
-_Filled in as each part lands: bootstrap → Temporal Cloud → worker → GKE → dashboard._
+> Status: the worker and dashboard have been verified locally. The cloud steps below haven't yet been run end to end. See the OpenSpec tasks for what's left.
+
+```bash
+export PROJECT_ID=my-gcp-project
+export TEMPORAL_CLOUD_API_KEY=...        # account-level key that can create namespaces
+
+# 1. Remote state bucket (local state, no secrets)
+terraform -chdir=infra/bootstrap init
+terraform -chdir=infra/bootstrap apply -var project_id=$PROJECT_ID
+export STATE_BUCKET=$(terraform -chdir=infra/bootstrap output -raw state_bucket)
+
+# 2. Temporal Cloud namespace, service accounts and keys, Artifact Registry, GKE clusters
+#    (also runs scripts/ha-settings.sh to disable passive poller forwarding)
+terraform -chdir=infra/main init -backend-config="bucket=$STATE_BUCKET"
+terraform -chdir=infra/main apply -var project_id=$PROJECT_ID
+temporal cloud namespace ha get --api-key "$TEMPORAL_CLOUD_API_KEY" \
+  --namespace "$(terraform -chdir=infra/main output -raw namespace_id)"
+#    -> one active region, replica Activated, passive poller forwarding disabled
+
+# 3. Worker image
+IMAGE=$(scripts/build-push.sh "$(terraform -chdir=infra/main output -raw image_repository)" | tail -1)
+
+# 4. Workers in both regions (Deployment, Secret, PodMonitoring)
+terraform -chdir=infra/workloads init -backend-config="bucket=$STATE_BUCKET"
+terraform -chdir=infra/workloads apply -var state_bucket=$STATE_BUCKET -var worker_image=$IMAGE
+
+# 5. Dashboard
+scripts/write-dashboard-env.sh
+gcloud auth application-default login
+(cd dashboard && npm install && npm start)   # http://localhost:3000
+```
+
+Replication for a new namespace can take a few minutes. The dashboard disables the failover button until the replica is ready.
+
+## Failover from the CLI (backup for the dashboard button)
+
+```bash
+NS=$(terraform -chdir=infra/main output -raw namespace_id)
+temporal cloud namespace ha get --api-key "$TEMPORAL_CLOUD_API_KEY" --namespace "$NS"
+temporal cloud namespace ha failover --api-key "$TEMPORAL_CLOUD_API_KEY" --namespace "$NS" --region gcp-us-central1
+```
+
+## Teardown
+
+```bash
+terraform -chdir=infra/workloads destroy -var state_bucket=$STATE_BUCKET -var worker_image=unused
+terraform -chdir=infra/main destroy -var project_id=$PROJECT_ID
+terraform -chdir=infra/bootstrap destroy -var project_id=$PROJECT_ID
+```
+
+This removes the clusters, namespace, service accounts, keys, registry and state bucket.
