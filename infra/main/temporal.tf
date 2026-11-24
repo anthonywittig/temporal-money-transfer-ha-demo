@@ -33,13 +33,28 @@ resource "temporalcloud_service_account" "load" {
   }]
 }
 
-# Failover needs FailoverNamespaceRegion, which the built-in permissions grant only to
-# Namespace Admin. (A Custom Role with cloud.namespace.get + cloud.namespace.failoverRegion
-# would be tighter; see design.md.)
+# Failover needs FailoverNamespaceRegion. Among built-in permissions only Namespace Admin
+# grants it; with failover_custom_role = true a Custom Role grants just what the dashboard
+# needs. (GetAsyncOperation is already covered by the account Read role.)
+resource "temporalcloud_custom_role" "failover" {
+  count       = var.failover_custom_role ? 1 : 0
+  name        = "${var.namespace_name}-failover"
+  description = "Read the HA namespace and trigger failovers"
+  permissions = [{
+    actions = ["cloud.namespace.get", "cloud.namespace.failoverRegion"]
+    resources = {
+      resource_type = "namespaces"
+      resource_ids  = [local.namespace_id]
+      allow_all     = false
+    }
+  }]
+}
+
 resource "temporalcloud_service_account" "failover" {
-  name           = "${var.namespace_name}-failover"
-  account_access = "read"
-  namespace_accesses = [{
+  name                        = "${var.namespace_name}-failover"
+  account_access              = "read"
+  account_access_custom_roles = var.failover_custom_role ? [temporalcloud_custom_role.failover[0].id] : null
+  namespace_accesses = var.failover_custom_role ? null : [{
     namespace_id = local.namespace_id
     permission   = "admin"
   }]

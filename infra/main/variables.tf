@@ -31,3 +31,13 @@ variable "api_key_ttl_hours" {
   default     = 2160 # 90 days
   description = "Lifetime of the generated service-account API keys"
 }
+
+variable "failover_custom_role" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    true: the failover key gets account Read plus a Custom Role with only cloud.namespace.get and
+    cloud.namespace.failoverRegion on this namespace (least privilege; Custom Roles are pre-release
+    and may need to be enabled on the account). false: the failover key gets Namespace Admin.
+  EOT
+}
