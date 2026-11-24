@@ -26,11 +26,11 @@ public class MoneyTransferWorkflow
         var error = Validate(input);
         if (error != null)
         {
-            meter.CreateCounter<long>("transfers_failed", description: "Transfers that failed").Add(1);
+            meter.CreateCounter<long>(AppMetricNames.TransfersFailed.Name, description: AppMetricNames.TransfersFailed.Description).Add(1);
             throw new ApplicationFailureException(error, errorType: "InvalidTransfer", nonRetryable: true);
         }
 
-        meter.CreateCounter<long>("transfers_started", description: "Transfers started").Add(1);
+        meter.CreateCounter<long>(AppMetricNames.TransfersStarted.Name, description: AppMetricNames.TransfersStarted.Description).Add(1);
 
         var withdraw = await Workflow.ExecuteActivityAsync(
             (TransferActivities a) => a.Withdraw(new StepInput(input.TransferId, input.FromAccount, input.Amount)),
@@ -42,7 +42,7 @@ public class MoneyTransferWorkflow
             (TransferActivities a) => a.Deposit(new StepInput(input.TransferId, input.ToAccount, input.Amount)),
             StepOptions);
 
-        meter.CreateCounter<long>("transfers_completed", description: "Transfers completed").Add(1);
+        meter.CreateCounter<long>(AppMetricNames.TransfersCompleted.Name, description: AppMetricNames.TransfersCompleted.Description).Add(1);
 
         return new TransferResult(input.TransferId, withdraw, deposit);
     }

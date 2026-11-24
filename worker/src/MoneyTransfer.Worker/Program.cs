@@ -52,6 +52,8 @@ builder.Services
         options.Identity = $"{config.Region}/{Environment.MachineName}";
     });
 
+AppMetrics.Preregister(runtime, config.Namespace, config.TaskQueue);
+
 var app = builder.Build();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok", region = config.Region }));
 

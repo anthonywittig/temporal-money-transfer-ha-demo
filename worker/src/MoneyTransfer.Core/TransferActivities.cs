@@ -30,7 +30,7 @@ public class TransferActivities(Bank bank, string region)
         if (ActivityExecutionContext.HasCurrent)
         {
             ActivityExecutionContext.Current.MetricMeter
-                .CreateCounter<long>("transfer_steps", description: "Transfer steps executed")
+                .CreateCounter<long>(AppMetricNames.TransferSteps.Name, description: AppMetricNames.TransferSteps.Description)
                 .Add(1, new Dictionary<string, object> { ["step"] = step.ToLowerInvariant() });
         }
 

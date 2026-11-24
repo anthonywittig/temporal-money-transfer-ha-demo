@@ -35,3 +35,16 @@ public static class Names
     public const string DefaultTaskQueue = "money-transfer";
     public const int DefaultPauseSeconds = 60;
 }
+
+/// <summary>
+/// App metric names and descriptions. Every caller must use these so the workflow, the activities
+/// and the startup pre-registration all create the identical instrument (same name, description
+/// and unit), or the exporter emits duplicate series.
+/// </summary>
+public static class AppMetricNames
+{
+    public static readonly (string Name, string Description) TransfersStarted = ("transfers_started", "Transfers started");
+    public static readonly (string Name, string Description) TransfersCompleted = ("transfers_completed", "Transfers completed");
+    public static readonly (string Name, string Description) TransfersFailed = ("transfers_failed", "Transfers that failed");
+    public static readonly (string Name, string Description) TransferSteps = ("transfer_steps", "Transfer steps executed");
+}
