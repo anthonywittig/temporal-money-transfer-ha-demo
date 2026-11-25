@@ -195,7 +195,9 @@ const markerPlugin: Plugin<'line'> = {
       ctx.setLineDash([]);
       ctx.fillStyle = m.color;
       ctx.font = '11px system-ui, sans-serif';
-      ctx.fillText(m.label, x + 4, chartArea.top + 12 + (n % 4) * 14); // stagger rows so close labels don't overlap
+      // Labels go in the strip above the plot (layout.padding.top), so they never cover the lines.
+      // Two rows, alternating, so labels of markers close together don't overlap each other.
+      ctx.fillText(m.label, x + 4, chartArea.top - 6 - (n % 2) * 13);
       ctx.restore();
     });
   },
@@ -228,12 +230,13 @@ function makeChart(canvasId: string) {
     options: {
       animation: false,
       maintainAspectRatio: false,
+      layout: { padding: { top: 30 } }, // room for the marker labels above the plot
       interaction: { mode: 'index', intersect: false },
       scales: {
         x: { ticks: { color: '#8a93a6', maxTicksLimit: 8 }, grid: { color: '#262c38' } },
         y: { beginAtZero: true, ticks: { color: '#8a93a6' }, grid: { color: '#262c38' } },
       },
-      plugins: { legend: { labels: { color: '#e6e9ef' } } },
+      plugins: { legend: { position: 'bottom', labels: { color: '#e6e9ef' } } }, // legend below, so the strip above the plot is free for marker labels
     },
   });
 }
