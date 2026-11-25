@@ -275,7 +275,7 @@ async function refreshMetrics() {
 
 api<{ namespace: string; taskQueue: string }>('/api/info')
   .then((i) => {
-    $('ns-info').textContent = `${i.namespace} · task queue ${i.taskQueue} · one start per second · each transfer: withdraw, wait 10 s, deposit`;
+    $('ns-info').textContent = `Task queue ${i.taskQueue} · one start per second · each transfer: withdraw, wait 10 s, deposit`;
     const query = 'WorkflowType = "MoneyTransfer" AND CrossRegion = true';
     $<HTMLAnchorElement>('crossed').href =
       `https://cloud.temporal.io/namespaces/${encodeURIComponent(i.namespace)}/workflows?query=${encodeURIComponent(query)}`;
