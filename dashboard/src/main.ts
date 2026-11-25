@@ -24,10 +24,13 @@ interface Series { region: string; points: [number, number][] }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const REGION_COLORS = ['#7c8cff', '#3ecf8e', '#f5b942', '#f2555a'];
-const regionColor = new Map<string, string>();
+// Colors follow the alphabetical order of the regions (us-central1 blue, us-east4 green), so they
+// stay the same across page loads no matter which region is active.
+const knownRegions = new Set<string>();
 const colorFor = (region: string) => {
-  if (!regionColor.has(region)) regionColor.set(region, REGION_COLORS[regionColor.size % REGION_COLORS.length]);
-  return regionColor.get(region)!;
+  knownRegions.add(region);
+  const index = [...knownRegions].sort().indexOf(region);
+  return REGION_COLORS[index % REGION_COLORS.length];
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -53,11 +56,8 @@ async function refreshState() {
   const opStatus = $('op-status');
   const btn = $<HTMLButtonElement>('failover-btn');
   try {
-    const previousActive = haState?.activeRegion;
     haState = await api<HaState>('/api/state');
-    if (previousActive && haState.activeRegion && haState.activeRegion !== previousActive) {
-      addMarker(`active: ${haState.activeRegion}`, colorFor(haState.activeRegion));
-    }
+    haState.regions.forEach((r) => knownRegions.add(r.region));
     markOperation(haState.operation);
     badge.textContent = haState.activeRegion || '-';
     badge.style.background = haState.failoverInProgress ? '' : colorFor(haState.activeRegion);
@@ -167,7 +167,7 @@ async function refreshCrossed() {
 
 // ---- Charts ----
 
-// Vertical markers for the active-region switch and the failover operation, kept for the session.
+// Vertical markers for the failover operation (started / finished), kept for the session.
 interface Marker { t: number; label: string; color: string }
 const markers: Marker[] = [];
 const chartTimes = new WeakMap<Chart, number[]>();
@@ -216,7 +216,7 @@ function markOperation(op?: HaState['operation']) {
     const t = iso ? Date.parse(iso) / 1000 : NaN;
     if (markedOps.has(key) || Number.isNaN(t)) continue;
     markedOps.add(key);
-    addMarker(kind === 'started' ? 'op started' : `op ${op.state}`, OP_COLOR, t);
+    addMarker(kind === 'started' ? 'failover started' : `failover ${op.state === 'fulfilled' ? 'completed' : op.state}`, OP_COLOR, t);
   }
 }
 
@@ -275,7 +275,7 @@ async function refreshMetrics() {
 
 api<{ namespace: string; taskQueue: string }>('/api/info')
   .then((i) => {
-    $('ns-info').textContent = `${i.namespace} · task queue ${i.taskQueue} · one start per second · each transfer: withdraw, wait 10 s, deposit`;
+    $('ns-info').textContent = `Task queue ${i.taskQueue} · one start per second · each transfer: withdraw, wait 10 s, deposit`;
     const query = 'WorkflowType = "MoneyTransfer" AND CrossRegion = true';
     $<HTMLAnchorElement>('crossed').href =
       `https://cloud.temporal.io/namespaces/${encodeURIComponent(i.namespace)}/workflows?query=${encodeURIComponent(query)}`;

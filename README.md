@@ -8,6 +8,10 @@ Money transfers that keep running while a **Temporal Cloud** Namespace fails ove
 - **Metrics:** workers expose Prometheus metrics, Google Managed Prometheus collects them, and the dashboard charts them.
 - **Infra:** Terraform for the Temporal Cloud HA Namespace, service accounts and API keys, GKE, Artifact Registry and GMP.
 
+![The dashboard during a failover from gcp-us-east4 to gcp-us-central1](docs/images/dashboard-failover.png)
+
+*The dashboard during a failover from us-east4 to us-central1. 130 transfers were started one per second, and the failover was triggered 30s in, once east was at full rate. The amber lines mark when Temporal Cloud started and completed the failover. Work stops in east (green) and continues in central (blue), which is still processing at full rate when the failover completes. Nine transfers withdrew in one region and deposited in the other.*
+
 ## Architecture
 
 ```
