@@ -33,12 +33,12 @@ public class FailoverReplayTests
             var runA = workerA.ExecuteAsync(stopA.Token);
 
             handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t-failover", "alice", "bob", 5m, PreWithdrawSeconds: 1, PostWithdrawSeconds: 3)),
+                RunWith(new TransferInput("t-failover", "alice", "bob", 5m)),
                 new(id: id, taskQueue: tq));
 
-            // The second timer is the pause between withdraw and deposit.
+            // The timer is the pause between withdraw and deposit.
             await WaitForAsync(async () =>
-                (await handle.FetchHistoryAsync()).Events.Count(e => e.EventType == EventType.TimerStarted) == 2);
+                (await handle.FetchHistoryAsync()).Events.Any(e => e.EventType == EventType.TimerStarted));
 
             stopA.Cancel();
             try { await runA; } catch (OperationCanceledException) { }

@@ -26,7 +26,7 @@ public class WorkflowTests
         await worker.ExecuteAsync(async () =>
         {
             var handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t1", "alice", "bob", 25m, PreWithdrawSeconds: 0, PostWithdrawSeconds: 0)),
+                RunWith(new TransferInput("t1", "alice", "bob", 25m)),
                 new(id: $"transfer-{Guid.NewGuid()}", taskQueue: tq));
             var result = await handle.GetResultAsync();
 
@@ -40,7 +40,7 @@ public class WorkflowTests
     }
 
     [Fact]
-    public async Task Each_step_waits_for_its_own_delay()
+    public async Task Deposit_waits_for_the_post_withdraw_delay()
     {
         await using var env = await StartEnvAsync();
         var tq = $"tq-{Guid.NewGuid()}";
@@ -48,7 +48,7 @@ public class WorkflowTests
         await worker.ExecuteAsync(async () =>
         {
             var handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t2", "alice", "bob", 10m, PreWithdrawSeconds: 1, PostWithdrawSeconds: 2)),
+                RunWith(new TransferInput("t2", "alice", "bob", 10m)),
                 new(id: $"transfer-{Guid.NewGuid()}", taskQueue: tq));
             await handle.GetResultAsync();
 
@@ -58,14 +58,14 @@ public class WorkflowTests
                 .Select(e => e.EventType)
                 .ToList();
             Assert.Equal(
-                new[] { EventType.TimerStarted, EventType.ActivityTaskCompleted, EventType.TimerStarted, EventType.ActivityTaskCompleted },
+                new[] { EventType.ActivityTaskCompleted, EventType.TimerStarted, EventType.ActivityTaskCompleted },
                 order);
 
             var timers = events
                 .Where(e => e.EventType == EventType.TimerStarted)
                 .Select(e => e.TimerStartedEventAttributes.StartToFireTimeout.ToTimeSpan())
                 .ToList();
-            Assert.Equal(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2) }, timers);
+            Assert.Equal(new[] { Names.PostWithdrawDelay }, timers);
         });
     }
 

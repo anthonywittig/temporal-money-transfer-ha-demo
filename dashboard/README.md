@@ -32,7 +32,7 @@ If a required setting is missing, the server exits and names it. All settings ar
 | `GET /api/failovers?window=600` | Failovers of the namespace from any source (Cloud UI, CLI, automatic), found through the audit log, with their start and finish times. Only when `TEMPORAL_AUDIT_API_KEY` is set; otherwise `{ enabled: false }` |
 | `GET /api/metrics?window=600` | Per-region `rate(transfer_steps_total[10s])`, withdraws and deposits combined |
 | `GET /api/inflight` | Count of running `MoneyTransfer` workflows |
-| `POST /api/transfers {count}` | Starts 1–500 transfers (`transfer-<n>-<uuid>`), through the Namespace Endpoint, one per second (the request returns when the last has started). Each waits 1 s, withdraws, waits 10 s, deposits |
+| `POST /api/transfers {count}` | Starts 1–500 transfers (`transfer-<n>-<uuid>`), through the Namespace Endpoint, one per second (the request returns when the last has started). Each withdraws, waits 10 s, deposits |
 
 Errors come back as `{ "error": "..." }` with a non-2xx status, and the UI shows them on the affected panel.
 
