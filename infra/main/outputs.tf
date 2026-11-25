@@ -41,8 +41,3 @@ output "failover_api_key" {
   value     = temporalcloud_apikey.failover.token
   sensitive = true
 }
-
-output "cutover_dashboard_url" {
-  description = "Cloud Monitoring dashboard showing work moving between regions during a failover"
-  value       = "https://console.cloud.google.com/monitoring/dashboards/custom/${element(split("/", google_monitoring_dashboard.cutover.id), 3)}?project=${var.project_id}"
-}

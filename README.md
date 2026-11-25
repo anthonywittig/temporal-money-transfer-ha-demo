@@ -6,7 +6,7 @@ Money transfers that keep running while a **Temporal Cloud** Namespace fails ove
 - **Workers:** the same .NET image in a GKE cluster in each region. They use the **Active/Hot-Passive** pattern: each fleet connects to its own region's Regional Endpoint, and passive poller forwarding is disabled, so only the active region's workers process tasks.
 - **Failover:** one button on a local TypeScript dashboard calls the Cloud Ops API. It works in either direction.
 - **Metrics:** workers expose Prometheus metrics, Google Managed Prometheus collects them, and the dashboard charts them.
-- **Infra:** Terraform for the Temporal Cloud HA Namespace, service accounts and API keys, GKE, Artifact Registry, GMP and a Cloud Monitoring dashboard.
+- **Infra:** Terraform for the Temporal Cloud HA Namespace, service accounts and API keys, GKE, Artifact Registry and GMP.
 
 ![The dashboard during a failover from gcp-us-east4 to gcp-us-central1](docs/images/dashboard-failover.png)
 
@@ -102,23 +102,6 @@ gcloud auth application-default login
 ```
 
 Replication for a new namespace can take a few minutes. The dashboard disables the failover button until the replica is ready.
-
-## Watching the cutover in the GCP console
-
-Terraform also creates a Cloud Monitoring dashboard, "HA demo: <namespace> failover". It charts the worker metrics by region, so during a failover every line moves from one region to the other:
-
-- Transfer steps per second
-- Withdraws and deposits per second
-- Activities executed per second (Temporal SDK metric)
-- Workflow tasks received per second (Temporal SDK metric)
-
-Open it with:
-
-```bash
-terraform -chdir=infra/main output -raw cutover_dashboard_url
-```
-
-The charts use a 30s rate window, and Managed Prometheus data arrives 15–30s behind real time.
 
 ## Failover from the CLI (backup for the dashboard button)
 
