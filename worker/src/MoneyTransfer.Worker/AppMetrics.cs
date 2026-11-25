@@ -24,7 +24,6 @@ public static class AppMetrics
                  {
                      AppMetricNames.TransfersStarted,
                      AppMetricNames.TransfersCompleted,
-                     AppMetricNames.TransfersFailed,
                  })
         {
             workflowMeter.CreateCounter<long>(name, description: description).Add(0);

@@ -100,7 +100,6 @@ $('failover-btn').addEventListener('click', async () => {
   try {
     const res = await api<{ targetRegion: string }>('/api/failover', { method: 'POST' });
     status.textContent = `Failover to ${res.targetRegion} requested`;
-    addMarker(`failover clicked \u2192 ${res.targetRegion}`, '#e6e9ef');
   } catch (e) {
     status.className = 'error';
     status.textContent = `Failover rejected: ${(e as Error).message}`;
@@ -168,7 +167,7 @@ async function refreshCrossed() {
 
 // ---- Charts ----
 
-// Vertical markers for "failover clicked" and "active region switched", kept for the session.
+// Vertical markers for the active-region switch and the failover operation, kept for the session.
 interface Marker { t: number; label: string; color: string }
 const markers: Marker[] = [];
 const chartTimes = new WeakMap<Chart, number[]>();

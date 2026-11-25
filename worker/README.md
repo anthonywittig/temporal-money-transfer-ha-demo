@@ -26,7 +26,7 @@ If a required variable is missing, the worker exits with code 2 and names the va
 
 All series carry `region`. App counters:
 
-- `transfers_started_total`, `transfers_completed_total`, `transfers_failed_total` (emitted from the workflow; replay-safe)
+- `transfers_started_total`, `transfers_completed_total` (emitted from the workflow; replay-safe)
 - `transfer_steps_total{step="withdraw"|"deposit"}` (emitted from activities)
 
 The Temporal SDK's own metrics (`temporal_*`) are on the same endpoint.

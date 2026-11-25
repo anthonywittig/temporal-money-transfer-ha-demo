@@ -44,7 +44,6 @@ public static class AppMetricNames
 {
     public static readonly (string Name, string Description) TransfersStarted = ("transfers_started", "Transfers started");
     public static readonly (string Name, string Description) TransfersCompleted = ("transfers_completed", "Transfers completed");
-    public static readonly (string Name, string Description) TransfersFailed = ("transfers_failed", "Transfers that failed");
     public static readonly (string Name, string Description) TransferSteps = ("transfer_steps", "Transfer steps executed");
 }
 

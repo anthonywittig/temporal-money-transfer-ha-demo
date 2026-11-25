@@ -1,5 +1,4 @@
 using Temporalio.Common;
-using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
 namespace MoneyTransfer.Core;
@@ -22,13 +21,6 @@ public class MoneyTransferWorkflow
     public async Task<TransferResult> RunAsync(TransferInput input)
     {
         var meter = Workflow.MetricMeter;
-        var error = Validate(input);
-        if (error != null)
-        {
-            meter.CreateCounter<long>(AppMetricNames.TransfersFailed.Name, description: AppMetricNames.TransfersFailed.Description).Add(1);
-            throw new ApplicationFailureException(error, errorType: "InvalidTransfer", nonRetryable: true);
-        }
-
         meter.CreateCounter<long>(AppMetricNames.TransfersStarted.Name, description: AppMetricNames.TransfersStarted.Description).Add(1);
 
         var withdraw = await Workflow.ExecuteActivityAsync(
@@ -48,15 +40,5 @@ public class MoneyTransferWorkflow
         meter.CreateCounter<long>(AppMetricNames.TransfersCompleted.Name, description: AppMetricNames.TransfersCompleted.Description).Add(1);
 
         return new TransferResult(input.TransferId, withdraw, deposit);
-    }
-
-    internal static string? Validate(TransferInput input)
-    {
-        if (string.IsNullOrWhiteSpace(input.TransferId)) return "transferId is required";
-        if (string.IsNullOrWhiteSpace(input.FromAccount) || string.IsNullOrWhiteSpace(input.ToAccount))
-            return "fromAccount and toAccount are required";
-        if (input.FromAccount == input.ToAccount) return "fromAccount and toAccount must differ";
-        if (input.Amount <= 0) return "amount must be positive";
-        return null;
     }
 }
