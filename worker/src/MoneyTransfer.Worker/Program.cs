@@ -34,6 +34,8 @@ var runtime = new TemporalRuntime(new TemporalRuntimeOptions
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls($"http://0.0.0.0:{config.HttpPort}");
+// One line per log entry, so Cloud Logging records each as a single entry.
+builder.Logging.AddSimpleConsole(o => o.SingleLine = true);
 builder.Logging.AddFilter("Temporalio", config.TemporalLogLevel);
 
 builder.Services

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Temporalio.Activities;
 
 namespace MoneyTransfer.Core;
@@ -19,9 +20,12 @@ public class TransferActivities(string region)
     {
         // Make API call here.
 
-        ActivityExecutionContext.Current.MetricMeter
+        var context = ActivityExecutionContext.Current;
+        context.MetricMeter
             .CreateCounter<long>(AppMetricNames.TransferSteps.Name, description: AppMetricNames.TransferSteps.Description)
             .Add(1, new Dictionary<string, object> { ["step"] = step.ToLowerInvariant() });
+        context.Logger.LogInformation(
+            "{Step} ran in {Region} for {WorkflowId}", step, Region, context.Info.WorkflowId);
 
         return new StepResult(step, Region);
     }
