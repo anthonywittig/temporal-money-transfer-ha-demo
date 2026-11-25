@@ -10,7 +10,7 @@ Money transfers that keep running while a **Temporal Cloud** Namespace fails ove
 
 ![The dashboard during a failover from gcp-us-east4 to gcp-us-central1](docs/images/dashboard-failover.png)
 
-*The dashboard during a failover from us-east4 to us-central1, with 60 transfers started one per second. The amber lines mark when Temporal Cloud started and finished the failover. Between them, work stops in east (green) and continues in central (blue). Nine transfers withdrew in one region and deposited in the other.*
+*The dashboard during a failover from us-east4 to us-central1, with 75 transfers started one per second. The amber lines mark when Temporal Cloud started and finished the failover. Work stops in east (green) and continues in central (blue) while the failover is still finishing. Nine transfers withdrew in one region and deposited in the other.*
 
 ## Architecture
 
