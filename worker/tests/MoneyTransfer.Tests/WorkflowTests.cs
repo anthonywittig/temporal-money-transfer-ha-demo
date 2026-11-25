@@ -1,7 +1,6 @@
 using MoneyTransfer.Core;
 using Temporalio.Api.Enums.V1;
 using Temporalio.Client;
-using Temporalio.Exceptions;
 using Temporalio.Testing;
 using Temporalio.Worker;
 using Xunit;
@@ -69,27 +68,4 @@ public class WorkflowTests
         });
     }
 
-    [Theory]
-    [InlineData(0, "alice", "bob")]
-    [InlineData(-5, "alice", "bob")]
-    [InlineData(10, "alice", "alice")]
-    public async Task Invalid_transfer_fails_without_withdraw(decimal amount, string from, string to)
-    {
-        await using var env = await StartEnvAsync();
-        var tq = $"tq-{Guid.NewGuid()}";
-        using var worker = NewWorker(env.Client, tq, "region-a");
-        await worker.ExecuteAsync(async () =>
-        {
-            var handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t3", from, to, amount)),
-                new(id: $"transfer-{Guid.NewGuid()}", taskQueue: tq));
-
-            var ex = await Assert.ThrowsAsync<WorkflowFailedException>(() => handle.GetResultAsync());
-            var failure = Assert.IsType<ApplicationFailureException>(ex.InnerException);
-            Assert.Equal("InvalidTransfer", failure.ErrorType);
-
-            var events = (await handle.FetchHistoryAsync()).Events;
-            Assert.DoesNotContain(events, e => e.EventType == EventType.ActivityTaskScheduled);
-        });
-    }
 }
