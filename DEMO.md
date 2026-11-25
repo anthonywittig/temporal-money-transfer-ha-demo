@@ -53,7 +53,7 @@ Right after starting the batch, click **Fail over to gcp-us-central1**. There is
 Watch for:
 - The badge flips to **gcp-us-central1**
 - On the steps chart (solid = deposit, dashed = withdraw), **both east lines drop to zero and both central lines pick up** the rest of the stream. Those are the warm workers taking over with no restart and no config change.
-- Two amber dotted lines on the chart: **failover started** when Temporal begins the failover, and **failover fulfilled** when it completes. The badge flips to the new region in between.
+- Two amber dotted lines on the chart: **failover started** when Temporal begins the failover, and **failover completed** when it finishes. The badge flips to the new region in between.
 - In-flight count keeps counting down to 0
 
 ## 5. Prove it (2 min)

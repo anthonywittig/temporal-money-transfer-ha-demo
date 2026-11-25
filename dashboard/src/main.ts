@@ -216,7 +216,7 @@ function markOperation(op?: HaState['operation']) {
     const t = iso ? Date.parse(iso) / 1000 : NaN;
     if (markedOps.has(key) || Number.isNaN(t)) continue;
     markedOps.add(key);
-    addMarker(kind === 'started' ? 'failover started' : `failover ${op.state}`, OP_COLOR, t);
+    addMarker(kind === 'started' ? 'failover started' : `failover ${op.state === 'fulfilled' ? 'completed' : op.state}`, OP_COLOR, t);
   }
 }
 
