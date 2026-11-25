@@ -39,30 +39,20 @@
           <span id="inflight" class="value">-</span>
           <span id="inflight-error" class="error"></span>
         </div>
+        <div class="stat">
+          <span class="label">Crossed regions <span class="hint">(last 10 min)</span></span>
+          <a id="crossed" class="value" target="_blank" rel="noopener" title="Open these transfers in the Temporal Cloud UI">-</a>
+          <span id="crossed-error" class="error"></span>
+        </div>
         <div id="regions" class="regions"></div>
       </section>
 
       <section class="panel">
-        <h2>Transfer steps per second, by region</h2>
-        <div class="chart-wrap"><canvas id="steps-chart"></canvas></div>
+        <h2>Total steps per second (withdraw + deposit), by region</h2>
+        <div class="chart-wrap"><canvas id="total-chart"></canvas></div>
         <p id="metrics-error" class="error"></p>
       </section>
-
-      <section class="panel">
-        <h2>Transfers completed per second, by region</h2>
-        <div class="chart-wrap"><canvas id="completed-chart"></canvas></div>
-      </section>
     </main>
-
-    <dialog id="confirm">
-      <form method="dialog">
-        <p id="confirm-text"></p>
-        <div class="dialog-actions">
-          <button value="cancel">Cancel</button>
-          <button value="ok" class="danger">Fail over</button>
-        </div>
-      </form>
-    </dialog>
 
     <script type="module" src="./main.ts"></script>
   </body>

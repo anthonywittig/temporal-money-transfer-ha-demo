@@ -3,9 +3,9 @@
 A local web app for running the demo. It does four things:
 
 - Shows the **active region** and replica state (Cloud Ops API, failover key)
-- Charts **transfer steps per second** and **completions per second by region** (Google Managed Prometheus, through your `gcloud` ADC)
+- Charts **transfer steps per second by region** (withdraws and deposits combined) (Google Managed Prometheus, through your `gcloud` ADC)
 - Shows the **in-flight** transfer count (Temporal visibility, load key)
-- Has **Start N transfers** (load key) and **Fail over to X** (failover key, with a confirmation step) buttons. Failover works in either direction.
+- Has **Start N transfers** (load key) and **Fail over to X** (failover key; clicking it fails over immediately, with no confirmation) buttons. Failover works in either direction.
 
 All API keys stay in the local Node server. The browser only talks to `/api/*`.
 
@@ -29,9 +29,10 @@ If a required setting is missing, the server exits and names it. All settings ar
 |---|---|
 | `GET /api/state` | Active region, replicas, failover target, in-progress operation, and why failover is blocked (if it is) |
 | `POST /api/failover` | Fails over to the other region. Returns 409 if the replica isn't ready or an operation is running. |
-| `GET /api/metrics?window=600` | Per-region `rate(transfer_steps_total[30s])` and `rate(transfers_completed_total[30s])` |
+| `GET /api/failovers?window=600` | Failovers of the namespace from any source (Cloud UI, CLI, automatic), found through the audit log, with their start and finish times. Only when `TEMPORAL_AUDIT_API_KEY` is set; otherwise `{ enabled: false }` |
+| `GET /api/metrics?window=600` | Per-region `rate(transfer_steps_total[10s])`, withdraws and deposits combined |
 | `GET /api/inflight` | Count of running `MoneyTransfer` workflows |
-| `POST /api/transfers {count}` | Starts 1–500 transfers (`transfer-<uuid>`) through the Namespace Endpoint |
+| `POST /api/transfers {count}` | Starts 1–500 transfers (`transfer-<n>-<uuid>`), through the Namespace Endpoint, one per second (the request returns when the last has started). Each waits 1 s, withdraws, waits 10 s, deposits |
 
 Errors come back as `{ "error": "..." }` with a non-2xx status, and the UI shows them on the affected panel.
 

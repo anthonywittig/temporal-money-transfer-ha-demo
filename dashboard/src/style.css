@@ -97,6 +97,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .stats { display: flex; gap: 32px; flex-wrap: wrap; align-items: center; }
 .stat { display: flex; flex-direction: column; }
 .stat .value { font-size: 36px; font-weight: 700; }
+a.value { color: inherit; text-decoration: underline dotted; text-underline-offset: 6px; }
+.hint { color: var(--muted); font-weight: 400; }
 
 .regions { display: flex; gap: 12px; flex-wrap: wrap; }
 .region {
@@ -105,23 +107,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   border: 1px solid var(--border);
   min-width: 180px;
 }
-.region.active { border-color: var(--ok); }
-.region .name { font-weight: 600; }
+.region.active { border-color: var(--region-color); }
+.region .name { font-weight: 600; color: var(--region-color); }
 .region .role { font-size: 12px; color: var(--muted); }
-.region.active .role { color: var(--ok); }
+.region.active .role { color: var(--region-color); }
 
 .chart-wrap { position: relative; height: 260px; }
-
-dialog {
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  max-width: 420px;
-}
-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.dialog-actions button[value='cancel'] { background: transparent; color: var(--text); }
 
 @media (max-width: 600px) {
   header, main { padding-left: 16px; padding-right: 16px; }

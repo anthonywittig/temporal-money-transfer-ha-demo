@@ -15,6 +15,9 @@ TEMPORAL_ADDRESS=$(tf namespace_endpoint)
 TEMPORAL_LOAD_API_KEY=$(tf load_api_key)
 TEMPORAL_FAILOVER_API_KEY=$(tf failover_api_key)
 GCP_PROJECT_ID=$(tf project_id)
+# Optional: a key that can list audit logs (Global Admin or Account Owner), so the charts also mark
+# failovers started from the Cloud UI or CLI. Pass it in explicitly: TEMPORAL_AUDIT_API_KEY=... $0
+TEMPORAL_AUDIT_API_KEY=${TEMPORAL_AUDIT_API_KEY:-}
 ENV
 
 echo "Wrote $out"

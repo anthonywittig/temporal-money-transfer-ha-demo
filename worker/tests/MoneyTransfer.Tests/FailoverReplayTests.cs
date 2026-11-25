@@ -19,7 +19,7 @@ public class FailoverReplayTests
     [Fact]
     public async Task Fresh_worker_in_other_region_finishes_in_flight_transfer()
     {
-        await using var env = await WorkflowEnvironment.StartLocalAsync();
+        await using var env = await StartEnvAsync();
         var tq = $"tq-{Guid.NewGuid()}";
         var id = $"transfer-{Guid.NewGuid()}";
         WorkflowHandle<MoneyTransferWorkflow, TransferResult> handle;
@@ -27,17 +27,18 @@ public class FailoverReplayTests
         // Region A: run until the withdraw has completed, then stop the worker.
         using (var workerA = new TemporalWorker(env.Client, new TemporalWorkerOptions(tq)
                    .AddWorkflow<MoneyTransferWorkflow>()
-                   .AddAllActivities(new TransferActivities(new Bank(), "region-a"))))
+                   .AddAllActivities(new TransferActivities("region-a"))))
         {
             using var stopA = new CancellationTokenSource();
             var runA = workerA.ExecuteAsync(stopA.Token);
 
             handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t-failover", "alice", "bob", 5m, PauseSeconds: 3)),
+                RunWith(new TransferInput("t-failover", "alice", "bob", 5m, PreWithdrawSeconds: 1, PostWithdrawSeconds: 3)),
                 new(id: id, taskQueue: tq));
 
+            // The second timer is the pause between withdraw and deposit.
             await WaitForAsync(async () =>
-                (await handle.FetchHistoryAsync()).Events.Any(e => e.EventType == EventType.TimerStarted));
+                (await handle.FetchHistoryAsync()).Events.Count(e => e.EventType == EventType.TimerStarted) == 2);
 
             stopA.Cancel();
             try { await runA; } catch (OperationCanceledException) { }
@@ -52,11 +53,16 @@ public class FailoverReplayTests
         // Region B: a fresh worker (no sticky cache, new bank) completes the transfer.
         using var workerB = new TemporalWorker(env.Client, new TemporalWorkerOptions(tq)
             .AddWorkflow<MoneyTransferWorkflow>()
-            .AddAllActivities(new TransferActivities(new Bank(), "region-b")));
+            .AddAllActivities(new TransferActivities("region-b")));
         var result = await workerB.ExecuteAsync(() => handle.GetResultAsync());
 
         Assert.Equal("region-a", result.Withdraw.Region);
         Assert.Equal("region-b", result.Deposit.Region);
+
+        var attrs = (await handle.DescribeAsync()).TypedSearchAttributes;
+        Assert.Equal("region-a", attrs.Get(TransferSearchAttributes.WithdrawRegion));
+        Assert.Equal("region-b", attrs.Get(TransferSearchAttributes.DepositRegion));
+        Assert.True(attrs.Get(TransferSearchAttributes.CrossRegion));
 
         var events = (await handle.FetchHistoryAsync()).Events;
         Assert.Equal(2, events.Count(e => e.EventType == EventType.ActivityTaskCompleted));

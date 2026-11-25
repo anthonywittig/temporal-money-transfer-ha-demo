@@ -43,9 +43,9 @@ class FakeCloudOps implements CloudOps {
 function appWith(cloudOps: CloudOps) {
   return buildApp({
     failover: new FailoverService(cloudOps),
-    metrics: { snapshot: async () => ({ stepRate: [], completedRate: [] }) },
-    transfers: { start: async (n) => ({ started: n, workflowIds: [] }), inFlight: async () => 0 },
-    info: { namespace: 'ns.acct', taskQueue: 'money-transfer', pauseSeconds: 20 },
+    metrics: { snapshot: async () => ({ totalStepRate: [] }) },
+    transfers: { start: async (n) => ({ started: n, workflowIds: [] }), inFlight: async () => 0, crossedRegions: async () => 0 },
+    info: { namespace: 'ns.acct', taskQueue: 'money-transfer' },
     logger: false,
   });
 }
