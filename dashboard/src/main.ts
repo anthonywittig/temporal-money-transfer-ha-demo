@@ -53,11 +53,7 @@ async function refreshState() {
   const opStatus = $('op-status');
   const btn = $<HTMLButtonElement>('failover-btn');
   try {
-    const previousActive = haState?.activeRegion;
     haState = await api<HaState>('/api/state');
-    if (previousActive && haState.activeRegion && haState.activeRegion !== previousActive) {
-      addMarker(`active: ${haState.activeRegion}`, colorFor(haState.activeRegion));
-    }
     markOperation(haState.operation);
     badge.textContent = haState.activeRegion || '-';
     badge.style.background = haState.failoverInProgress ? '' : colorFor(haState.activeRegion);
@@ -167,7 +163,7 @@ async function refreshCrossed() {
 
 // ---- Charts ----
 
-// Vertical markers for the active-region switch and the failover operation, kept for the session.
+// Vertical markers for the failover operation (started / finished), kept for the session.
 interface Marker { t: number; label: string; color: string }
 const markers: Marker[] = [];
 const chartTimes = new WeakMap<Chart, number[]>();
