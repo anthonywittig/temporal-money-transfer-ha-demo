@@ -10,8 +10,6 @@ export interface TransferStarter {
 
 const ACCOUNTS = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank'];
 const START_INTERVAL_MS = 1000;
-const PRE_WITHDRAW_SECONDS = 1;
-const POST_WITHDRAW_SECONDS = 10;
 
 /**
  * Starts MoneyTransfer workflows through the Namespace Endpoint with the load-generator key.
@@ -33,7 +31,7 @@ export async function temporalTransfers(opts: {
 
   return {
     async start(count) {
-      // Starts one transfer per second. Each waits 1s, withdraws, waits 10s, then deposits, so steps
+      // Starts one transfer per second. Each withdraws right away, waits 10s, then deposits, so steps
       // stream in at about one per second with deposits trailing withdraws by 10s. A failed start
       // (e.g. mid-failover) doesn't stop the batch; failures are reported once all have been tried.
       const workflowIds: string[] = [];
@@ -49,7 +47,7 @@ export async function temporalTransfers(opts: {
           await client.workflow.start('MoneyTransfer', {
             taskQueue: opts.taskQueue,
             workflowId,
-            args: [{ transferId, fromAccount: from, toAccount: to, amount: 1 + (i % 100), preWithdrawSeconds: PRE_WITHDRAW_SECONDS, postWithdrawSeconds: POST_WITHDRAW_SECONDS }],
+            args: [{ transferId, fromAccount: from, toAccount: to, amount: 1 + (i % 100) }],
           });
           workflowIds.push(workflowId);
         } catch (e) {

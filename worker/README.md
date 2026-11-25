@@ -2,7 +2,7 @@
 
 | Project | Contents |
 |---|---|
-| `src/MoneyTransfer.Core` | `MoneyTransferWorkflow` (`preWithdrawSeconds` → `withdraw` → `postWithdrawSeconds` → `deposit`), `TransferActivities` (placeholder steps: "Make API call here") |
+| `src/MoneyTransfer.Core` | `MoneyTransferWorkflow` (`withdraw` → 10s pause → `deposit`), `TransferActivities` (placeholder steps: "Make API call here") |
 | `src/MoneyTransfer.Worker` | Hosted worker: env config, Prometheus metrics, `/healthz` |
 | `tests/MoneyTransfer.Tests` | Workflow, activity and idempotency tests, plus a simulated cross-region failover replay |
 
@@ -45,7 +45,7 @@ TEMPORAL_ADDRESS=localhost:7233 TEMPORAL_NAMESPACE=default TEMPORAL_INSECURE=tru
 
 # 3. A transfer
 temporal workflow execute --type MoneyTransfer --task-queue money-transfer --workflow-id t-1 \
-  --input '{"transferId":"t-1","fromAccount":"alice","toAccount":"bob","amount":10,"preWithdrawSeconds":2,"postWithdrawSeconds":5}'
+  --input '{"transferId":"t-1","fromAccount":"alice","toAccount":"bob","amount":10}'
 
 # 4. Metrics
 curl -s localhost:9464/metrics | grep ^transfer

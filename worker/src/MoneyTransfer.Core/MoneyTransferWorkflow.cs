@@ -31,16 +31,12 @@ public class MoneyTransferWorkflow
 
         meter.CreateCounter<long>(AppMetricNames.TransfersStarted.Name, description: AppMetricNames.TransfersStarted.Description).Add(1);
 
-        // Each step waits for its own delay first. The caller (the dashboard) staggers these per transfer
-        // so withdraws and deposits arrive as streams the failover can split.
-        await Workflow.DelayAsync(TimeSpan.FromSeconds(input.PreWithdrawSeconds ?? Names.DefaultDelaySeconds));
-
         var withdraw = await Workflow.ExecuteActivityAsync(
             (TransferActivities a) => a.Withdraw(new StepInput(input.TransferId, input.FromAccount, input.Amount)),
             StepOptions);
         Workflow.UpsertTypedSearchAttributes(TransferSearchAttributes.WithdrawRegion.ValueSet(withdraw.Region));
 
-        await Workflow.DelayAsync(TimeSpan.FromSeconds(input.PostWithdrawSeconds ?? Names.DefaultDelaySeconds));
+        await Workflow.DelayAsync(Names.PostWithdrawDelay);
 
         var deposit = await Workflow.ExecuteActivityAsync(
             (TransferActivities a) => a.Deposit(new StepInput(input.TransferId, input.ToAccount, input.Amount)),
@@ -61,7 +57,6 @@ public class MoneyTransferWorkflow
             return "fromAccount and toAccount are required";
         if (input.FromAccount == input.ToAccount) return "fromAccount and toAccount must differ";
         if (input.Amount <= 0) return "amount must be positive";
-        if (input.PreWithdrawSeconds is < 0 || input.PostWithdrawSeconds is < 0) return "delays must not be negative";
         return null;
     }
 }

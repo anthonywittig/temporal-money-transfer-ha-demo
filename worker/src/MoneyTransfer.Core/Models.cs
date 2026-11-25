@@ -9,9 +9,7 @@ public record TransferInput(
     [property: JsonPropertyName("transferId")] string TransferId,
     [property: JsonPropertyName("fromAccount")] string FromAccount,
     [property: JsonPropertyName("toAccount")] string ToAccount,
-    [property: JsonPropertyName("amount")] decimal Amount,
-    [property: JsonPropertyName("preWithdrawSeconds")] int? PreWithdrawSeconds = null,
-    [property: JsonPropertyName("postWithdrawSeconds")] int? PostWithdrawSeconds = null);
+    [property: JsonPropertyName("amount")] decimal Amount);
 
 public record StepInput(
     [property: JsonPropertyName("transferId")] string TransferId,
@@ -33,7 +31,8 @@ public static class Names
     public const string Withdraw = "Withdraw";
     public const string Deposit = "Deposit";
     public const string DefaultTaskQueue = "money-transfer";
-    public const int DefaultDelaySeconds = 30;
+    /// <summary>Pause between the withdraw and the deposit, long enough for a failover to land in between.</summary>
+    public static readonly TimeSpan PostWithdrawDelay = TimeSpan.FromSeconds(10);
 }
 
 /// <summary>
