@@ -3,10 +3,11 @@ export interface Config {
   address: string;
   loadApiKey?: string;
   failoverApiKey: string;
+  /** Optional key that can list audit logs, to find failovers started outside the dashboard. */
+  auditApiKey?: string;
   insecure: boolean;
   gcpProjectId: string;
   taskQueue: string;
-  pauseSeconds: number;
   port: number;
   cloudOpsUrl: string;
   cloudOpsApiVersion?: string;
@@ -40,10 +41,10 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     address,
     loadApiKey,
     failoverApiKey,
+    auditApiKey: env.TEMPORAL_AUDIT_API_KEY?.trim() || undefined,
     insecure,
     gcpProjectId,
     taskQueue: env.TASK_QUEUE?.trim() || 'money-transfer',
-    pauseSeconds: intOr(env, 'TRANSFER_PAUSE_SECONDS', 60),
     port: intOr(env, 'PORT', 3000),
     cloudOpsUrl: (env.CLOUD_OPS_URL?.trim() || 'https://saas-api.tmprl.cloud').replace(/\/$/, ''),
     cloudOpsApiVersion: env.CLOUD_OPS_API_VERSION?.trim() || undefined,

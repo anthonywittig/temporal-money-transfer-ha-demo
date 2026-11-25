@@ -13,6 +13,29 @@ locals {
   namespace_endpoint = "${temporalcloud_namespace.ns.id}.tmprl.cloud:7233"
 }
 
+# --- Search attributes: find transfers whose withdraw and deposit ran in different regions --------
+# The workflow sets these after each step. Namespace updates are applied one at a time, so the
+# three are chained instead of created in parallel.
+resource "temporalcloud_namespace_search_attribute" "withdraw_region" {
+  namespace_id = local.namespace_id
+  name         = "WithdrawRegion"
+  type         = "keyword"
+}
+
+resource "temporalcloud_namespace_search_attribute" "deposit_region" {
+  namespace_id = local.namespace_id
+  name         = "DepositRegion"
+  type         = "keyword"
+  depends_on   = [temporalcloud_namespace_search_attribute.withdraw_region]
+}
+
+resource "temporalcloud_namespace_search_attribute" "cross_region" {
+  namespace_id = local.namespace_id
+  name         = "CrossRegion"
+  type         = "bool"
+  depends_on   = [temporalcloud_namespace_search_attribute.deposit_region]
+}
+
 # --- Service accounts: one per role, least privilege -------------------------------------
 
 resource "temporalcloud_service_account" "worker" {

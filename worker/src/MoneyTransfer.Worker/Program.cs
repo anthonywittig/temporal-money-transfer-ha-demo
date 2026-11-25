@@ -39,7 +39,7 @@ builder.Logging.AddFilter("Temporalio", config.TemporalLogLevel);
 builder.Services
     .AddHostedTemporalWorker(config.Address, config.Namespace, config.TaskQueue)
     .AddWorkflow<MoneyTransferWorkflow>()
-    .AddActivitiesInstance(new TransferActivities(new Bank(), config.Region))
+    .AddActivitiesInstance(new TransferActivities(config.Region))
     .ConfigureOptions(options =>
     {
         var client = options.ClientOptions!;

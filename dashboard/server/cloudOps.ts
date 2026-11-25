@@ -15,6 +15,9 @@ export interface AsyncOperation {
   id: string;
   state: string;
   failureReason?: string;
+  /** When Temporal Cloud started and finished the operation (ISO 8601), if reported. */
+  startedTime?: string;
+  finishedTime?: string;
 }
 
 export interface CloudOps {
@@ -31,17 +34,17 @@ export class CloudOpsError extends Error {
 
 type Fetch = typeof fetch;
 
-export function httpCloudOps(opts: {
+interface CallerOptions {
   baseUrl: string;
   apiKey: string;
-  namespace: string;
   apiVersion?: string;
   fetchImpl?: Fetch;
-}): CloudOps {
-  const doFetch = opts.fetchImpl ?? fetch;
-  const ns = encodeURIComponent(opts.namespace);
+}
 
-  async function call(method: string, path: string, body?: unknown): Promise<any> {
+/** Authenticated JSON call to the Cloud Ops HTTP API. Errors become CloudOpsError. */
+function cloudOpsCaller(opts: CallerOptions) {
+  const doFetch = opts.fetchImpl ?? fetch;
+  return async function call(method: string, path: string, body?: unknown): Promise<any> {
     const headers: Record<string, string> = { Authorization: `Bearer ${opts.apiKey}` };
     if (opts.apiVersion) headers['temporal-cloud-api-version'] = opts.apiVersion;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -61,7 +64,12 @@ export function httpCloudOps(opts: {
       throw new CloudOpsError(`Cloud Ops API ${method} ${path} failed: ${res.status} ${text.slice(0, 300)}`, res.status);
     }
     return text ? JSON.parse(text) : {};
-  }
+  };
+}
+
+export function httpCloudOps(opts: CallerOptions & { namespace: string }): CloudOps {
+  const call = cloudOpsCaller(opts);
+  const ns = encodeURIComponent(opts.namespace);
 
   return {
     async getNamespace() {
@@ -94,6 +102,8 @@ export function parseOperation(o: any): AsyncOperation {
     id: String(o.id ?? ''),
     state: normalizeEnum(o.state ?? o.stateDeprecated, 'STATE_'),
     failureReason: o.failureReason || undefined,
+    startedTime: o.startedTime || undefined,
+    finishedTime: o.finishedTime || undefined,
   };
 }
 
@@ -112,4 +122,52 @@ export function normalizeEnum(value: unknown, prefix: string): string {
 export function describeFetchError(e: unknown): string {
   const err = e as Error & { cause?: { code?: string; message?: string } };
   return err.cause?.code ?? err.cause?.message ?? err.message ?? String(e);
+}
+
+/** Reads the account audit log. Needs a key that may list audit logs (Global Admin or Account Owner). */
+export interface AuditLog {
+  /** IDs of failover operations on `namespaceName` recorded since `sinceIso`, oldest first. */
+  failoverOperationIds(namespaceName: string, sinceIso: string): Promise<string[]>;
+}
+
+const AUDIT_PAGE_SIZE = 200;
+const AUDIT_MAX_PAGES = 5;
+
+export function httpAuditLog(opts: CallerOptions): AuditLog {
+  const call = cloudOpsCaller(opts);
+  return {
+    async failoverOperationIds(namespaceName, sinceIso) {
+      const ids: string[] = [];
+      let pageToken = '';
+      for (let page = 0; page < AUDIT_MAX_PAGES; page++) {
+        const params = new URLSearchParams({ startTimeInclusive: sinceIso, pageSize: String(AUDIT_PAGE_SIZE) });
+        if (pageToken) params.set('pageToken', pageToken);
+        const json = await call('GET', `/cloud/audit-logs?${params}`);
+        ids.push(...parseFailoverAuditLogs(json.logs ?? [], namespaceName));
+        pageToken = json.nextPageToken ?? '';
+        if (!pageToken) break;
+      }
+      return [...new Set(ids)];
+    },
+  };
+}
+
+/** Picks the async operation IDs of FailoverNamespace entries for one namespace, oldest first. */
+export function parseFailoverAuditLogs(logs: any[], namespaceName: string): string[] {
+  return logs
+    .filter((l) => l?.operation === 'FailoverNamespace' && l?.asyncOperationId)
+    .filter((l) => {
+      const details = typeof l.rawDetails === 'string' ? safeJson(l.rawDetails) : l.rawDetails;
+      return details?.namespace === namespaceName;
+    })
+    .sort((a, b) => String(a.emitTime ?? '').localeCompare(String(b.emitTime ?? '')))
+    .map((l) => String(l.asyncOperationId));
+}
+
+function safeJson(s: string): any {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return undefined;
+  }
 }

@@ -7,8 +7,7 @@ export interface Series {
 }
 
 export interface MetricsSnapshot {
-  stepRate: Series[];
-  completedRate: Series[];
+  totalStepRate: Series[];
 }
 
 export interface MetricsSource {
@@ -18,8 +17,7 @@ export interface MetricsSource {
 export class MetricsError extends Error {}
 
 export const QUERIES = {
-  stepRate: 'sum by (region) (rate(transfer_steps_total[30s]))',
-  completedRate: 'sum by (region) (rate(transfers_completed_total[30s]))',
+  totalStepRate: 'sum by (region) (rate(transfer_steps_total[10s]))',
 };
 
 /**
@@ -75,11 +73,7 @@ export function prometheusMetrics(opts: { baseUrl: string; useGoogleAuth: boolea
 
   return {
     async snapshot(windowSeconds) {
-      const [stepRate, completedRate] = await Promise.all([
-        rangeQuery(QUERIES.stepRate, windowSeconds),
-        rangeQuery(QUERIES.completedRate, windowSeconds),
-      ]);
-      return { stepRate, completedRate };
+      return { totalStepRate: await rangeQuery(QUERIES.totalStepRate, windowSeconds) };
     },
   };
 }

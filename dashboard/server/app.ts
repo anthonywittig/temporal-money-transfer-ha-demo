@@ -1,14 +1,16 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { FailoverRejected, type FailoverService } from './failover.js';
+import type { FailoverHistory } from './failoverHistory.js';
 import type { MetricsSource } from './metrics.js';
 import type { TransferStarter } from './transfers.js';
 
 export interface Deps {
   failover: FailoverService;
+  failoverHistory?: FailoverHistory;
   metrics: MetricsSource;
   transfers: TransferStarter;
-  info: { namespace: string; taskQueue: string; pauseSeconds: number };
+  info: { namespace: string; taskQueue: string };
   staticDir?: string;
   logger?: boolean;
 }
@@ -31,12 +33,23 @@ export function buildApp(deps: Deps): FastifyInstance {
 
   app.post('/api/failover', async () => deps.failover.failover());
 
+  // Failovers from any source (via the audit log); enabled only when an audit key is configured.
+  app.get<{ Querystring: { window?: string } }>('/api/failovers', async (req) => {
+    if (!deps.failoverHistory) return { enabled: false, failovers: [] };
+    const window = Math.min(Math.max(Number(req.query.window) || 600, 60), 3600);
+    return { enabled: true, failovers: await deps.failoverHistory.recent(window) };
+  });
+
   app.get<{ Querystring: { window?: string } }>('/api/metrics', async (req) => {
     const window = Math.min(Math.max(Number(req.query.window ?? 600) || 600, 60), 3600);
     return deps.metrics.snapshot(window);
   });
 
   app.get('/api/inflight', async () => ({ inFlight: await deps.transfers.inFlight() }));
+  app.get<{ Querystring: { window?: string } }>('/api/crossed', async (req) => {
+    const window = Math.min(Math.max(Number(req.query.window) || 600, 60), 86_400);
+    return { crossed: await deps.transfers.crossedRegions(window), windowSeconds: window };
+  });
 
   app.post<{ Body: { count?: number } }>('/api/transfers', async (req, reply) => {
     const count = Number(req.body?.count);

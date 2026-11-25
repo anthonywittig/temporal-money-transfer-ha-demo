@@ -12,41 +12,43 @@ namespace MoneyTransfer.Tests;
 
 public class WorkflowTests
 {
-    private static TemporalWorker NewWorker(ITemporalClient client, string taskQueue, string region, Bank? bank = null) =>
+    private static TemporalWorker NewWorker(ITemporalClient client, string taskQueue, string region) =>
         new(client, new TemporalWorkerOptions(taskQueue)
             .AddWorkflow<MoneyTransferWorkflow>()
-            .AddAllActivities(new TransferActivities(bank ?? new Bank(), region)));
+            .AddAllActivities(new TransferActivities(region)));
 
     [Fact]
     public async Task Transfer_completes_withdraw_then_deposit()
     {
-        await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+        await using var env = await StartEnvAsync();
         var tq = $"tq-{Guid.NewGuid()}";
         using var worker = NewWorker(env.Client, tq, "region-a");
         await worker.ExecuteAsync(async () =>
         {
-            var result = await env.Client.ExecuteWorkflowAsync(
-                RunWith(new TransferInput("t1", "alice", "bob", 25m)),
+            var handle = await env.Client.StartWorkflowAsync(
+                RunWith(new TransferInput("t1", "alice", "bob", 25m, PreWithdrawSeconds: 0, PostWithdrawSeconds: 0)),
                 new(id: $"transfer-{Guid.NewGuid()}", taskQueue: tq));
+            var result = await handle.GetResultAsync();
 
             Assert.Equal("t1", result.TransferId);
             Assert.Equal(Names.Withdraw, result.Withdraw.Step);
             Assert.Equal(Names.Deposit, result.Deposit.Step);
             Assert.Equal("region-a", result.Withdraw.Region);
             Assert.Equal("region-a", result.Deposit.Region);
+            Assert.False((await handle.DescribeAsync()).TypedSearchAttributes.Get(TransferSearchAttributes.CrossRegion));
         });
     }
 
     [Fact]
-    public async Task Deposit_waits_for_configured_pause()
+    public async Task Each_step_waits_for_its_own_delay()
     {
-        await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+        await using var env = await StartEnvAsync();
         var tq = $"tq-{Guid.NewGuid()}";
         using var worker = NewWorker(env.Client, tq, "region-a");
         await worker.ExecuteAsync(async () =>
         {
             var handle = await env.Client.StartWorkflowAsync(
-                RunWith(new TransferInput("t2", "alice", "bob", 10m, PauseSeconds: 30)),
+                RunWith(new TransferInput("t2", "alice", "bob", 10m, PreWithdrawSeconds: 1, PostWithdrawSeconds: 2)),
                 new(id: $"transfer-{Guid.NewGuid()}", taskQueue: tq));
             await handle.GetResultAsync();
 
@@ -55,10 +57,15 @@ public class WorkflowTests
                 .Where(e => e.EventType is EventType.ActivityTaskCompleted or EventType.TimerStarted)
                 .Select(e => e.EventType)
                 .ToList();
-            Assert.Equal(new[] { EventType.ActivityTaskCompleted, EventType.TimerStarted, EventType.ActivityTaskCompleted }, order);
+            Assert.Equal(
+                new[] { EventType.TimerStarted, EventType.ActivityTaskCompleted, EventType.TimerStarted, EventType.ActivityTaskCompleted },
+                order);
 
-            var timer = events.Single(e => e.EventType == EventType.TimerStarted);
-            Assert.Equal(TimeSpan.FromSeconds(30), timer.TimerStartedEventAttributes.StartToFireTimeout.ToTimeSpan());
+            var timers = events
+                .Where(e => e.EventType == EventType.TimerStarted)
+                .Select(e => e.TimerStartedEventAttributes.StartToFireTimeout.ToTimeSpan())
+                .ToList();
+            Assert.Equal(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2) }, timers);
         });
     }
 
@@ -68,10 +75,9 @@ public class WorkflowTests
     [InlineData(10, "alice", "alice")]
     public async Task Invalid_transfer_fails_without_withdraw(decimal amount, string from, string to)
     {
-        await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+        await using var env = await StartEnvAsync();
         var tq = $"tq-{Guid.NewGuid()}";
-        var bank = new Bank();
-        using var worker = NewWorker(env.Client, tq, "region-a", bank);
+        using var worker = NewWorker(env.Client, tq, "region-a");
         await worker.ExecuteAsync(async () =>
         {
             var handle = await env.Client.StartWorkflowAsync(
@@ -84,7 +90,6 @@ public class WorkflowTests
 
             var events = (await handle.FetchHistoryAsync()).Events;
             Assert.DoesNotContain(events, e => e.EventType == EventType.ActivityTaskScheduled);
-            Assert.Equal(Bank.StartingBalance, bank.Balance(from));
         });
     }
 }
