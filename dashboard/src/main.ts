@@ -236,7 +236,7 @@ function makeChart(canvasId: string) {
         x: { ticks: { color: '#8a93a6', maxTicksLimit: 8 }, grid: { color: '#262c38' } },
         y: { beginAtZero: true, ticks: { color: '#8a93a6' }, grid: { color: '#262c38' } },
       },
-      plugins: { legend: { labels: { color: '#e6e9ef' } } },
+      plugins: { legend: { position: 'bottom', labels: { color: '#e6e9ef' } } }, // legend below, so the strip above the plot is free for marker labels
     },
   });
 }
