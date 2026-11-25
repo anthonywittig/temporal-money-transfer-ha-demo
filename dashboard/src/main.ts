@@ -24,10 +24,13 @@ interface Series { region: string; points: [number, number][] }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const REGION_COLORS = ['#7c8cff', '#3ecf8e', '#f5b942', '#f2555a'];
-const regionColor = new Map<string, string>();
+// Colors follow the alphabetical order of the regions (us-central1 blue, us-east4 green), so they
+// stay the same across page loads no matter which region is active.
+const knownRegions = new Set<string>();
 const colorFor = (region: string) => {
-  if (!regionColor.has(region)) regionColor.set(region, REGION_COLORS[regionColor.size % REGION_COLORS.length]);
-  return regionColor.get(region)!;
+  knownRegions.add(region);
+  const index = [...knownRegions].sort().indexOf(region);
+  return REGION_COLORS[index % REGION_COLORS.length];
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -54,6 +57,7 @@ async function refreshState() {
   const btn = $<HTMLButtonElement>('failover-btn');
   try {
     haState = await api<HaState>('/api/state');
+    haState.regions.forEach((r) => knownRegions.add(r.region));
     markOperation(haState.operation);
     badge.textContent = haState.activeRegion || '-';
     badge.style.background = haState.failoverInProgress ? '' : colorFor(haState.activeRegion);
